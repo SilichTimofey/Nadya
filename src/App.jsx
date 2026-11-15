@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { notifyTelegram } from './telegram';
 
 export default function App() {
   const [step, setStep] = useState(1);
@@ -7,10 +8,37 @@ export default function App() {
   const [refuseLabel, setRefuseLabel] = useState('Нет, я все таки не хочу');
   const [showCustomTime, setShowCustomTime] = useState(false);
   const [customTime, setCustomTime] = useState('');
+  const [selectedVibe, setSelectedVibe] = useState(null);
   const [selectedTime, setSelectedTime] = useState('');
   const [selectedTransport, setSelectedTransport] = useState('');
   const skipRef = useRef(null);
+  const videoRef = useRef(null);
   const lastDodgeRef = useRef(0);
+  const answersRef = useRef({
+    started: false,
+    accepted: false,
+    confirmed: false,
+    vibe: null,
+    time: '',
+    transport: '',
+  });
+
+  useEffect(() => {
+    if (step !== 7) return;
+    const video = videoRef.current;
+    if (!video) return;
+    video.play().catch(() => {});
+  }, [step]);
+
+  const toggleVideoPlayback = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) {
+      video.play().catch(() => {});
+    } else {
+      video.pause();
+    }
+  };
 
   const dodge = (e) => {
     if (e) {
@@ -58,16 +86,67 @@ export default function App() {
     });
   };
 
+  const trackAnswer = (patch) => {
+    answersRef.current = { ...answersRef.current, ...patch };
+  };
+
+  const sendProgress = (title, detail = '') => {
+    const lines = [
+      `<b>Invite app</b>`,
+      title,
+      detail && detail,
+      '',
+      `<i>${new Date().toLocaleString('ru-RU')}</i>`,
+    ].filter(Boolean);
+
+    notifyTelegram(lines.join('\n'));
+  };
+
+  const sendFinalSummary = () => {
+    const a = answersRef.current;
+    const transportLabel =
+      a.transport === 'drive'
+        ? 'Заехать'
+        : a.transport === 'pickup'
+          ? 'Зайти'
+          : '—';
+
+    const text = [
+      `<b>✅ Новый ответ в invite-app</b>`,
+      '',
+      `• Старт: ${a.started ? 'да' : 'нет'}`,
+      `• Согласие: ${a.accepted ? 'да' : 'нет'}`,
+      `• Подтверждение: ${a.confirmed ? 'да' : 'нет'}`,
+      `• Vibe: ${a.vibe?.label || '—'}`,
+      `• Время: ${a.time || '—'}`,
+      `• Транспорт: ${transportLabel}`,
+      '',
+      `<i>${new Date().toLocaleString('ru-RU')}</i>`,
+    ].join('\n');
+
+    notifyTelegram(text);
+  };
+
   const handleRefuse = () => {
     if (refuseLabel !== 'Нет, я все таки не хочу') return;
+    sendProgress('Попытка отказа', 'Нажала «Нет, я все таки не хочу» (кнопка сломана)');
     setRefuseLabel('Эта кнопка тоже не работает');
     setTimeout(() => {
       setStep(4);
     }, 2500);
   };
 
+  const selectVibe = (vibe) => {
+    setSelectedVibe(vibe);
+    trackAnswer({ vibe });
+    sendProgress('Выбран vibe', vibe.label);
+    setStep(5);
+  };
+
   const selectTime = (label) => {
     setSelectedTime(label);
+    trackAnswer({ time: label });
+    sendProgress('Выбрано время', label);
     setShowCustomTime(false);
     setStep(6);
   };
@@ -76,24 +155,50 @@ export default function App() {
     const value = customTime.trim();
     if (!value) return;
     setSelectedTime(value);
+    trackAnswer({ time: value });
+    sendProgress('Своё время', value);
     setShowCustomTime(false);
     setStep(6);
   };
 
-  const resetFlow = () => {
-    setSkipStyle({});
-    setSkipFleeing(false);
-    setRefuseLabel('Нет, я все таки не хочу');
-    setShowCustomTime(false);
-    setCustomTime('');
-    setSelectedTime('');
-    setSelectedTransport('');
-    setStep(1);
-  };
-
   const chooseTransport = (mode) => {
     setSelectedTransport(mode);
+    trackAnswer({ transport: mode });
+    sendFinalSummary();
     setStep(7);
+  };
+
+  const goBack = () => {
+    if (step === 5 && showCustomTime) {
+      setShowCustomTime(false);
+      return;
+    }
+    if (step <= 1) return;
+
+    if (step === 2) {
+      setSkipStyle({});
+      setSkipFleeing(false);
+    }
+    if (step === 3) {
+      setRefuseLabel('Нет, я все таки не хочу');
+    }
+    if (step === 5) {
+      setShowCustomTime(false);
+      setCustomTime('');
+      setSelectedVibe(null);
+      trackAnswer({ vibe: null });
+    }
+    if (step === 6) {
+      setSelectedTime('');
+      setShowCustomTime(false);
+      trackAnswer({ time: '' });
+    }
+    if (step === 7) {
+      setSelectedTransport('');
+      trackAnswer({ transport: '' });
+    }
+
+    setStep(step - 1);
   };
 
   const transportVerb =
@@ -212,7 +317,41 @@ export default function App() {
           margin-bottom: 28px;
           display: flex;
           justify-content: space-between;
+          align-items: center;
           gap: 12px;
+        }
+
+        .back-btn {
+          appearance: none;
+          border: none;
+          background: transparent;
+          font-family: 'Inter', sans-serif;
+          font-size: 10px;
+          font-weight: 500;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          color: #8a8a8a;
+          cursor: pointer;
+          padding: 0;
+          transition: color 0.15s ease;
+        }
+
+        .back-btn:hover {
+          color: #050505;
+        }
+
+        .frame.reveal .back-btn,
+        .frame.last-chance .back-btn,
+        .frame.timing .back-btn,
+        .frame.transport .back-btn {
+          color: rgba(245, 245, 245, 0.5);
+        }
+
+        .frame.reveal .back-btn:hover,
+        .frame.last-chance .back-btn:hover,
+        .frame.timing .back-btn:hover,
+        .frame.transport .back-btn:hover {
+          color: #f5f5f5;
         }
 
         .title {
@@ -1004,12 +1143,63 @@ export default function App() {
           border-color: #f5f5f5;
         }
 
-        /* Step 7 — confirmation summary */
+        /* Step 7 — confirmation / black background */
+        .shell.confirm {
+          background: #050505;
+        }
+
+        .shell.confirm::before {
+          opacity: 0.06;
+          mix-blend-mode: screen;
+        }
+
+        .frame.confirm {
+          background: #050505;
+          color: #f5f5f5;
+          padding: 28px 24px 32px;
+        }
+
+        .frame.confirm .meta {
+          max-width: 420px;
+          width: 100%;
+          margin: 0 auto 28px;
+          color: rgba(245, 245, 245, 0.45);
+        }
+
+        .frame.confirm .back-btn {
+          color: rgba(245, 245, 245, 0.5);
+        }
+
+        .frame.confirm .back-btn:hover {
+          color: #f5f5f5;
+        }
+
+        .frame.confirm .rule {
+          width: 28px;
+          background: rgba(245, 245, 245, 0.9);
+        }
+
+        .frame.confirm .title {
+          color: #f5f5f5;
+        }
+
+        .frame.confirm .footer-line {
+          border-top-color: rgba(245, 245, 245, 0.15);
+        }
+
+        .frame.confirm .btn.tiny {
+          color: rgba(245, 245, 245, 0.45);
+        }
+
+        .frame.confirm .btn.tiny:hover {
+          color: #f5f5f5;
+        }
+
         .confirm-lead {
           font-family: 'Inter', sans-serif;
           font-size: 15px;
           line-height: 1.55;
-          color: #555555;
+          color: rgba(245, 245, 245, 0.7);
           max-width: 320px;
           margin-bottom: 28px;
         }
@@ -1017,7 +1207,7 @@ export default function App() {
         .confirm-summary {
           width: 100%;
           max-width: 340px;
-          border-top: 1px solid #e5e5e5;
+          border-top: 1px solid rgba(245, 245, 245, 0.15);
           padding-top: 18px;
         }
 
@@ -1025,15 +1215,35 @@ export default function App() {
           font-family: 'Inter', sans-serif;
           font-size: 15px;
           line-height: 1.55;
-          color: #050505;
+          color: #f5f5f5;
+        }
+
+        .step-view.confirm-view {
+          overflow-y: auto;
+          padding-bottom: 8px;
+        }
+
+        .confirm-video {
+          display: block;
+          width: 100%;
+          max-width: 28rem;
+          margin: 24px auto 0;
+          border-radius: 0;
+          border: none;
+          background: #050505;
+          aspect-ratio: 16 / 9;
+          object-fit: cover;
+          cursor: pointer;
         }
       `}</style>
 
-      <div className={`shell${step === 1 ? ' survey' : ''}${step === 2 ? ' reveal' : ''}${step === 3 ? ' last-chance' : ''}${step === 5 ? ' timing' : ''}${step === 6 ? ' transport' : ''}`}>
-        <div className={`frame${step === 1 ? ' survey' : ''}${step === 2 ? ' reveal' : ''}${step === 3 ? ' last-chance' : ''}${step === 4 ? ' vibes-frame' : ''}${step === 5 ? ' timing' : ''}${step === 6 ? ' transport' : ''}`}>
+      <div className={`shell${step === 1 ? ' survey' : ''}${step === 2 ? ' reveal' : ''}${step === 3 ? ' last-chance' : ''}${step === 5 ? ' timing' : ''}${step === 6 ? ' transport' : ''}${step === 7 ? ' confirm' : ''}`}>
+        <div className={`frame${step === 1 ? ' survey' : ''}${step === 2 ? ' reveal' : ''}${step === 3 ? ' last-chance' : ''}${step === 4 ? ' vibes-frame' : ''}${step === 5 ? ' timing' : ''}${step === 6 ? ' transport' : ''}${step === 7 ? ' confirm' : ''}`}>
           {step !== 1 && (
             <div className="meta">
-              <span>UXR / ARCHIVE</span>
+              <button type="button" className="back-btn" onClick={goBack}>
+                ← Назад
+              </button>
               <span>0{step} / 07</span>
             </div>
           )}
@@ -1042,9 +1252,16 @@ export default function App() {
             <div className="survey-view">
               <h1 className="survey-title">Исследование целевой аудитории</h1>
               <p className="survey-text">
-                Пожалуйста, пройдите небольшой опрос (Customer Development) для нашего нового проекта. Это займет не более 1 минуты.
+                Пожалуйста, пройдите небольшой опрос для моего нового проекта. Это займет не более 1 минуты.
               </p>
-              <button className="survey-btn" onClick={() => setStep(2)}>
+              <button
+                className="survey-btn"
+                onClick={() => {
+                  trackAnswer({ started: true });
+                  sendProgress('Нажала «Начать опрос»');
+                  setStep(2);
+                }}
+              >
                 Начать опрос
               </button>
             </div>
@@ -1066,6 +1283,8 @@ export default function App() {
                   setSkipStyle({});
                   setSkipFleeing(false);
                   setRefuseLabel('Нет, я все таки не хочу');
+                  trackAnswer({ accepted: true });
+                  sendProgress('Нажала «Да, ты тоже ничего))»');
                   setStep(3);
                 }}>
                   Да, ты тоже ничего))
@@ -1102,6 +1321,8 @@ export default function App() {
                   className="btn"
                   onClick={() => {
                     setRefuseLabel('Нет, я все таки не хочу');
+                    trackAnswer({ confirmed: true });
+                    sendProgress('Нажала «Да, да, да»');
                     setStep(4);
                   }}
                 >
@@ -1127,7 +1348,7 @@ export default function App() {
                   <button
                     key={v.id}
                     className="card"
-                    onClick={() => setStep(5)}
+                    onClick={() => selectVibe(v)}
                   >
                     <span className="card-tag">{v.tag}</span>
                     <span className="card-copy">
@@ -1220,7 +1441,7 @@ export default function App() {
           )}
 
           {step === 7 && (
-            <div className="step-view">
+            <div className="step-view confirm-view">
               <div className="rule" />
               <h1 className="title xl">
                 Accepted<span className="accent">.</span>
@@ -1231,12 +1452,16 @@ export default function App() {
                   <p className="confirm-summary-text">{summarySentence}</p>
                 </div>
               )}
-              <div className="spacer" />
-              <div className="footer-line">
-                <button className="btn tiny" onClick={resetFlow}>
-                  reset sequence
-                </button>
-              </div>
+              <video
+                ref={videoRef}
+                className="confirm-video"
+                autoPlay
+                loop
+                playsInline
+                onClick={toggleVideoPlayback}
+              >
+                <source src="/video.mp4" type="video/mp4" />
+              </video>
             </div>
           )}
         </div>
