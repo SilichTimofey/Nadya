@@ -5,6 +5,10 @@ export default function App() {
   const [skipStyle, setSkipStyle] = useState({});
   const [skipFleeing, setSkipFleeing] = useState(false);
   const [refuseLabel, setRefuseLabel] = useState('Нет, я все таки не хочу');
+  const [showCustomTime, setShowCustomTime] = useState(false);
+  const [customTime, setCustomTime] = useState('');
+  const [selectedTime, setSelectedTime] = useState('');
+  const [selectedTransport, setSelectedTransport] = useState('');
   const skipRef = useRef(null);
   const lastDodgeRef = useRef(0);
 
@@ -59,8 +63,50 @@ export default function App() {
     setRefuseLabel('Эта кнопка тоже не работает');
     setTimeout(() => {
       setStep(4);
-    }, 1500);
+    }, 2500);
   };
+
+  const selectTime = (label) => {
+    setSelectedTime(label);
+    setShowCustomTime(false);
+    setStep(6);
+  };
+
+  const submitCustomTime = () => {
+    const value = customTime.trim();
+    if (!value) return;
+    setSelectedTime(value);
+    setShowCustomTime(false);
+    setStep(6);
+  };
+
+  const resetFlow = () => {
+    setSkipStyle({});
+    setSkipFleeing(false);
+    setRefuseLabel('Нет, я все таки не хочу');
+    setShowCustomTime(false);
+    setCustomTime('');
+    setSelectedTime('');
+    setSelectedTransport('');
+    setStep(1);
+  };
+
+  const chooseTransport = (mode) => {
+    setSelectedTransport(mode);
+    setStep(7);
+  };
+
+  const transportVerb =
+    selectedTransport === 'drive' ? 'заеду' : 'зайду';
+
+  const softenCaps = (value) =>
+    String(value || '')
+      .toLowerCase()
+      .replace(/(^|[/\s])(\S)/g, (_, sep, ch) => sep + ch.toUpperCase());
+
+  const summarySentence = selectedTime
+    ? `Отличный выбор, я ${transportVerb} за тобой в ${softenCaps(selectedTime)}.`
+    : '';
 
   const vibes = [
     {
@@ -733,6 +779,7 @@ export default function App() {
         .step-view.timing-view {
           max-width: 480px;
           width: 100%;
+          position: relative;
         }
 
         .timing-title {
@@ -808,14 +855,186 @@ export default function App() {
           border-style: solid;
           border-color: #f5f5f5;
         }
+
+        /* Custom time modal */
+        .time-modal-overlay {
+          position: absolute;
+          inset: 0;
+          background: rgba(5, 5, 5, 0.88);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 20;
+          padding: 16px;
+          animation: rise 0.25s ease-out;
+        }
+
+        .time-modal {
+          width: 100%;
+          max-width: 360px;
+          background: #0a0a0a;
+          border: 1px solid rgba(245, 245, 245, 0.35);
+          border-radius: 0;
+          padding: 22px 18px;
+        }
+
+        .time-input {
+          appearance: none;
+          width: 100%;
+          background: #050505;
+          color: #ffffff;
+          border: 1px solid rgba(245, 245, 245, 0.45);
+          border-radius: 0;
+          font-family: 'Inter', sans-serif;
+          font-size: 14px;
+          font-weight: 400;
+          padding: 14px 12px;
+          outline: none;
+          margin-bottom: 14px;
+        }
+
+        .time-input::placeholder {
+          color: rgba(245, 245, 245, 0.4);
+        }
+
+        .time-input:focus {
+          border-color: #f5f5f5;
+        }
+
+        .time-modal-actions {
+          display: flex;
+          gap: 10px;
+          width: 100%;
+        }
+
+        .time-modal-actions .slot-btn {
+          flex: 1;
+          padding: 14px 10px;
+          letter-spacing: 0.12em;
+        }
+
+        .time-modal-actions .slot-btn.primary {
+          background: #f5f5f5;
+          color: #050505;
+          border-color: #f5f5f5;
+        }
+
+        .time-modal-actions .slot-btn.primary:hover {
+          background: transparent;
+          color: #f5f5f5;
+        }
+
+        /* Step 6 — transportation */
+        .shell.transport {
+          background: #050505;
+        }
+
+        .shell.transport::before {
+          opacity: 0.06;
+          mix-blend-mode: screen;
+        }
+
+        .frame.transport {
+          background: #050505;
+          color: #f5f5f5;
+          padding: 28px 24px 36px;
+          justify-content: center;
+        }
+
+        .frame.transport .meta {
+          max-width: 420px;
+          width: 100%;
+          margin: 0 auto 36px;
+          color: rgba(245, 245, 245, 0.45);
+          position: absolute;
+          top: 28px;
+          left: 50%;
+          transform: translateX(-50%);
+          padding: 0 24px;
+        }
+
+        .step-view.transport-view {
+          justify-content: center;
+          align-items: center;
+          text-align: center;
+          gap: 36px;
+          max-width: 420px;
+        }
+
+        .transport-title {
+          font-family: 'Playfair Display', serif;
+          font-style: italic;
+          font-weight: 500;
+          font-size: 32px;
+          line-height: 1.25;
+          letter-spacing: -0.01em;
+          color: #f5f5f5;
+          text-align: center;
+          max-width: 340px;
+        }
+
+        .transport-actions {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          width: 100%;
+        }
+
+        .transport-btn {
+          appearance: none;
+          width: 100%;
+          border: 1px solid rgba(245, 245, 245, 0.9);
+          background: rgba(245, 245, 245, 0.08);
+          color: #f5f5f5;
+          font-family: 'Inter', sans-serif;
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          padding: 16px 18px;
+          cursor: pointer;
+          border-radius: 0;
+          backdrop-filter: blur(6px);
+          transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+        }
+
+        .transport-btn:hover {
+          background: rgba(245, 245, 245, 0.95);
+          color: #050505;
+          border-color: #f5f5f5;
+        }
+
+        /* Step 7 — confirmation summary */
+        .confirm-lead {
+          font-family: 'Inter', sans-serif;
+          font-size: 15px;
+          line-height: 1.55;
+          color: #555555;
+          max-width: 320px;
+          margin-bottom: 28px;
+        }
+
+        .confirm-summary {
+          width: 100%;
+          max-width: 340px;
+          border-top: 1px solid #e5e5e5;
+          padding-top: 18px;
+        }
+
+        .confirm-summary-text {
+          font-family: 'Inter', sans-serif;
+          font-size: 15px;
+          line-height: 1.55;
+          color: #050505;
+        }
       `}</style>
 
-      <div className={`shell${step === 1 ? ' survey' : ''}${step === 2 ? ' reveal' : ''}${step === 3 ? ' last-chance' : ''}${step === 5 ? ' timing' : ''}`}>
-        <div className={`frame${step === 1 ? ' survey' : ''}${step === 2 ? ' reveal' : ''}${step === 3 ? ' last-chance' : ''}${step === 4 ? ' vibes-frame' : ''}${step === 5 ? ' timing' : ''}`}>
+      <div className={`shell${step === 1 ? ' survey' : ''}${step === 2 ? ' reveal' : ''}${step === 3 ? ' last-chance' : ''}${step === 5 ? ' timing' : ''}${step === 6 ? ' transport' : ''}`}>
+        <div className={`frame${step === 1 ? ' survey' : ''}${step === 2 ? ' reveal' : ''}${step === 3 ? ' last-chance' : ''}${step === 4 ? ' vibes-frame' : ''}${step === 5 ? ' timing' : ''}${step === 6 ? ' transport' : ''}`}>
           {step !== 1 && (
             <div className="meta">
               <span>UXR / ARCHIVE</span>
-              <span>0{step} / 06</span>
+              <span>0{step} / 07</span>
             </div>
           )}
 
@@ -931,7 +1150,7 @@ export default function App() {
                     key={label}
                     type="button"
                     className="slot-btn"
-                    onClick={() => setStep(6)}
+                    onClick={() => selectTime(label)}
                   >
                     {label}
                   </button>
@@ -940,30 +1159,81 @@ export default function App() {
               <button
                 type="button"
                 className="slot-btn custom"
-                onClick={() => setStep(6)}
+                onClick={() => setShowCustomTime(true)}
               >
                 ПРЕДЛОЖИТЬ СВОЕ ВРЕМЯ
               </button>
+
+              {showCustomTime && (
+                <div className="time-modal-overlay">
+                  <div className="time-modal">
+                    <input
+                      className="time-input"
+                      type="text"
+                      value={customTime}
+                      onChange={(e) => setCustomTime(e.target.value)}
+                      placeholder="Введи свое время"
+                      autoFocus
+                    />
+                    <div className="time-modal-actions">
+                      <button
+                        type="button"
+                        className="slot-btn"
+                        onClick={() => setShowCustomTime(false)}
+                      >
+                        НАЗАД
+                      </button>
+                      <button
+                        type="button"
+                        className="slot-btn primary"
+                        onClick={submitCustomTime}
+                      >
+                        ДАЛЕЕ
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
           {step === 6 && (
+            <div className="step-view transport-view">
+              <h1 className="transport-title">За тобой зайти или заехать?</h1>
+              <div className="transport-actions">
+                <button
+                  type="button"
+                  className="transport-btn"
+                  onClick={() => chooseTransport('pickup')}
+                >
+                  ЗАЙТИ
+                </button>
+                <button
+                  type="button"
+                  className="transport-btn"
+                  onClick={() => chooseTransport('drive')}
+                >
+                  ЗАЕХАТЬ
+                </button>
+              </div>
+            </div>
+          )}
+
+          {step === 7 && (
             <div className="step-view">
               <div className="rule" />
               <h1 className="title xl">
                 Accepted<span className="accent">.</span>
               </h1>
-              <p className="body">
-                Сигнал получен. Детали — позже.
-              </p>
+              <p className="confirm-lead">Инвестировала в золото</p>
+              {summarySentence && (
+                <div className="confirm-summary">
+                  <p className="confirm-summary-text">{summarySentence}</p>
+                </div>
+              )}
               <div className="spacer" />
               <div className="footer-line">
-                <button className="btn tiny" onClick={() => {
-                  setSkipStyle({});
-                  setSkipFleeing(false);
-                  setRefuseLabel('Нет, я все таки не хочу');
-                  setStep(1);
-                }}>
+                <button className="btn tiny" onClick={resetFlow}>
                   reset sequence
                 </button>
               </div>
