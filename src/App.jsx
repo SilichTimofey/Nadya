@@ -4,6 +4,7 @@ export default function App() {
   const [step, setStep] = useState(1);
   const [skipStyle, setSkipStyle] = useState({});
   const [skipFleeing, setSkipFleeing] = useState(false);
+  const [refuseLabel, setRefuseLabel] = useState('Нет, я все таки не хочу');
   const skipRef = useRef(null);
   const lastDodgeRef = useRef(0);
 
@@ -51,6 +52,14 @@ export default function App() {
       zIndex: 50,
       margin: 0,
     });
+  };
+
+  const handleRefuse = () => {
+    if (refuseLabel !== 'Нет, я все таки не хочу') return;
+    setRefuseLabel('Эта кнопка тоже не работает');
+    setTimeout(() => {
+      setStep(4);
+    }, 1500);
   };
 
   const vibes = [
@@ -599,7 +608,106 @@ export default function App() {
           min-height: 48px;
         }
 
-        /* Step 4 — timing / Dark Feminine */
+        /* Step 3 — Last Chance / Dark Feminine Brutalist */
+        .shell.last-chance {
+          background: #050505;
+        }
+
+        .shell.last-chance::before {
+          opacity: 0.07;
+          mix-blend-mode: screen;
+        }
+
+        .frame.last-chance {
+          background: #050505;
+          color: #f5f5f5;
+          padding: 28px 24px 36px;
+          justify-content: flex-start;
+        }
+
+        .frame.last-chance .meta {
+          max-width: 420px;
+          width: 100%;
+          margin: 0 auto 36px;
+          color: rgba(245, 245, 245, 0.45);
+        }
+
+        .step-view.last-chance-view {
+          justify-content: space-between;
+          gap: 28px;
+          max-width: 420px;
+        }
+
+        .last-chance-top {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .frame.last-chance .rule {
+          width: 28px;
+          background: rgba(245, 245, 245, 0.9);
+          margin: 0 0 22px;
+        }
+
+        .last-chance-text {
+          font-family: 'Inter', sans-serif;
+          font-size: 22.5px;
+          font-weight: 400;
+          line-height: 1.5;
+          color: #f5f5f5;
+          max-width: 340px;
+        }
+
+        .frame.last-chance .actions {
+          width: 100%;
+          gap: 12px;
+          min-height: 0;
+        }
+
+        .frame.last-chance .btn {
+          background: #f5f5f5;
+          border: 1px solid #f5f5f5;
+          color: #050505;
+          border-radius: 0;
+          text-transform: none;
+          letter-spacing: 0.02em;
+          font-size: 14px;
+          font-weight: 600;
+          padding: 15px 18px;
+        }
+
+        .frame.last-chance .btn:hover {
+          background: transparent;
+          color: #f5f5f5;
+          border-color: #f5f5f5;
+        }
+
+        .frame.last-chance .btn.ghost {
+          background: transparent;
+          border-color: rgba(245, 245, 245, 0.4);
+          color: rgba(245, 245, 245, 0.88);
+          font-weight: 500;
+        }
+
+        .frame.last-chance .btn.ghost:hover {
+          background: rgba(245, 245, 245, 0.1);
+          border-color: rgba(245, 245, 245, 0.9);
+          color: #f5f5f5;
+        }
+
+        .frame.last-chance .btn.ghost.locked {
+          pointer-events: none;
+          border-color: rgba(245, 245, 245, 0.25);
+          color: rgba(245, 245, 245, 0.55);
+        }
+
+        .frame.last-chance .spacer {
+          flex: 1;
+          min-height: 48px;
+        }
+
+        /* Step 5 — timing / Dark Feminine */
         .shell.timing {
           background: #050505;
         }
@@ -702,12 +810,12 @@ export default function App() {
         }
       `}</style>
 
-      <div className={`shell${step === 1 ? ' survey' : ''}${step === 2 ? ' reveal' : ''}${step === 4 ? ' timing' : ''}`}>
-        <div className={`frame${step === 1 ? ' survey' : ''}${step === 2 ? ' reveal' : ''}${step === 3 ? ' vibes-frame' : ''}${step === 4 ? ' timing' : ''}`}>
+      <div className={`shell${step === 1 ? ' survey' : ''}${step === 2 ? ' reveal' : ''}${step === 3 ? ' last-chance' : ''}${step === 5 ? ' timing' : ''}`}>
+        <div className={`frame${step === 1 ? ' survey' : ''}${step === 2 ? ' reveal' : ''}${step === 3 ? ' last-chance' : ''}${step === 4 ? ' vibes-frame' : ''}${step === 5 ? ' timing' : ''}`}>
           {step !== 1 && (
             <div className="meta">
               <span>UXR / ARCHIVE</span>
-              <span>0{step} / 05</span>
+              <span>0{step} / 06</span>
             </div>
           )}
 
@@ -738,6 +846,7 @@ export default function App() {
                 <button className="btn" onClick={() => {
                   setSkipStyle({});
                   setSkipFleeing(false);
+                  setRefuseLabel('Нет, я все таки не хочу');
                   setStep(3);
                 }}>
                   Да, ты тоже ничего))
@@ -762,6 +871,35 @@ export default function App() {
           )}
 
           {step === 3 && (
+            <div className="step-view last-chance-view">
+              <div className="last-chance-top">
+                <div className="rule" />
+                <p className="last-chance-text">Ты действительно сказала да?</p>
+              </div>
+              <div className="spacer" />
+              <div className="actions">
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => {
+                    setRefuseLabel('Нет, я все таки не хочу');
+                    setStep(4);
+                  }}
+                >
+                  Да, да, да
+                </button>
+                <button
+                  type="button"
+                  className={`btn ghost${refuseLabel !== 'Нет, я все таки не хочу' ? ' locked' : ''}`}
+                  onClick={handleRefuse}
+                >
+                  {refuseLabel}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {step === 4 && (
             <div className="step-view vibes">
               <h1 className="title sm">CHOOSE YOUR VIBE</h1>
               <p className="body">Выбери формат. Без компромиссов.</p>
@@ -770,7 +908,7 @@ export default function App() {
                   <button
                     key={v.id}
                     className="card"
-                    onClick={() => setStep(4)}
+                    onClick={() => setStep(5)}
                   >
                     <span className="card-tag">{v.tag}</span>
                     <span className="card-copy">
@@ -783,7 +921,7 @@ export default function App() {
             </div>
           )}
 
-          {step === 4 && (
+          {step === 5 && (
             <div className="step-view timing-view">
               <h1 className="timing-title">TIMING.</h1>
               <p className="timing-sub">Выбери удобный день и время.</p>
@@ -793,7 +931,7 @@ export default function App() {
                     key={label}
                     type="button"
                     className="slot-btn"
-                    onClick={() => setStep(5)}
+                    onClick={() => setStep(6)}
                   >
                     {label}
                   </button>
@@ -802,14 +940,14 @@ export default function App() {
               <button
                 type="button"
                 className="slot-btn custom"
-                onClick={() => setStep(5)}
+                onClick={() => setStep(6)}
               >
                 ПРЕДЛОЖИТЬ СВОЕ ВРЕМЯ
               </button>
             </div>
           )}
 
-          {step === 5 && (
+          {step === 6 && (
             <div className="step-view">
               <div className="rule" />
               <h1 className="title xl">
@@ -823,6 +961,7 @@ export default function App() {
                 <button className="btn tiny" onClick={() => {
                   setSkipStyle({});
                   setSkipFleeing(false);
+                  setRefuseLabel('Нет, я все таки не хочу');
                   setStep(1);
                 }}>
                   reset sequence
