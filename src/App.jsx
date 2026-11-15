@@ -11,6 +11,7 @@ export default function App() {
   const [selectedVibe, setSelectedVibe] = useState(null);
   const [selectedTime, setSelectedTime] = useState('');
   const [selectedTransport, setSelectedTransport] = useState('');
+  const [contactInfo, setContactInfo] = useState('');
   const skipRef = useRef(null);
   const videoRef = useRef(null);
   const lastDodgeRef = useRef(0);
@@ -21,12 +22,14 @@ export default function App() {
     vibe: null,
     time: '',
     transport: '',
+    contact: '',
   });
 
   useEffect(() => {
-    if (step !== 7) return;
+    if (step !== 8) return;
     const video = videoRef.current;
     if (!video) return;
+    video.volume = 0.5;
     video.play().catch(() => {});
   }, [step]);
 
@@ -90,18 +93,6 @@ export default function App() {
     answersRef.current = { ...answersRef.current, ...patch };
   };
 
-  const sendProgress = (title, detail = '') => {
-    const lines = [
-      `<b>Invite app</b>`,
-      title,
-      detail && detail,
-      '',
-      `<i>${new Date().toLocaleString('ru-RU')}</i>`,
-    ].filter(Boolean);
-
-    notifyTelegram(lines.join('\n'));
-  };
-
   const sendFinalSummary = () => {
     const a = answersRef.current;
     const transportLabel =
@@ -120,6 +111,7 @@ export default function App() {
       `• Vibe: ${a.vibe?.label || '—'}`,
       `• Время: ${a.time || '—'}`,
       `• Транспорт: ${transportLabel}`,
+      `• Контакт: ${a.contact || '—'}`,
       '',
       `<i>${new Date().toLocaleString('ru-RU')}</i>`,
     ].join('\n');
@@ -129,7 +121,6 @@ export default function App() {
 
   const handleRefuse = () => {
     if (refuseLabel !== 'Нет, я все таки не хочу') return;
-    sendProgress('Попытка отказа', 'Нажала «Нет, я все таки не хочу» (кнопка сломана)');
     setRefuseLabel('Эта кнопка тоже не работает');
     setTimeout(() => {
       setStep(4);
@@ -139,14 +130,12 @@ export default function App() {
   const selectVibe = (vibe) => {
     setSelectedVibe(vibe);
     trackAnswer({ vibe });
-    sendProgress('Выбран vibe', vibe.label);
     setStep(5);
   };
 
   const selectTime = (label) => {
     setSelectedTime(label);
     trackAnswer({ time: label });
-    sendProgress('Выбрано время', label);
     setShowCustomTime(false);
     setStep(6);
   };
@@ -156,7 +145,6 @@ export default function App() {
     if (!value) return;
     setSelectedTime(value);
     trackAnswer({ time: value });
-    sendProgress('Своё время', value);
     setShowCustomTime(false);
     setStep(6);
   };
@@ -164,8 +152,16 @@ export default function App() {
   const chooseTransport = (mode) => {
     setSelectedTransport(mode);
     trackAnswer({ transport: mode });
-    sendFinalSummary();
     setStep(7);
+  };
+
+  const submitContact = () => {
+    const value = contactInfo.trim();
+    if (!value || !/^[a-zA-Z0-9@._+\-]+$/.test(value)) return;
+    setContactInfo(value);
+    trackAnswer({ contact: value });
+    sendFinalSummary();
+    setStep(8);
   };
 
   const goBack = () => {
@@ -197,6 +193,10 @@ export default function App() {
       setSelectedTransport('');
       trackAnswer({ transport: '' });
     }
+    if (step === 8) {
+      setContactInfo('');
+      trackAnswer({ contact: '' });
+    }
 
     setStep(step - 1);
   };
@@ -210,7 +210,7 @@ export default function App() {
       .replace(/(^|[/\s])(\S)/g, (_, sep, ch) => sep + ch.toUpperCase());
 
   const summarySentence = selectedTime
-    ? `Отличный выбор, я ${transportVerb} за тобой в ${softenCaps(selectedTime)}.`
+    ? `Отличный выбор, я ${transportVerb} за тобой в ${softenCaps(selectedTime).replace(/\s*\/\s*/g, '\u00A0/\u00A0')}.`
     : '';
 
   const vibes = [
@@ -342,15 +342,13 @@ export default function App() {
 
         .frame.reveal .back-btn,
         .frame.last-chance .back-btn,
-        .frame.timing .back-btn,
-        .frame.transport .back-btn {
+        .frame.timing .back-btn {
           color: rgba(245, 245, 245, 0.5);
         }
 
         .frame.reveal .back-btn:hover,
         .frame.last-chance .back-btn:hover,
-        .frame.timing .back-btn:hover,
-        .frame.transport .back-btn:hover {
+        .frame.timing .back-btn:hover {
           color: #f5f5f5;
         }
 
@@ -481,6 +479,7 @@ export default function App() {
           display: flex;
           flex-direction: column;
           justify-content: flex-start;
+          align-items: stretch;
           gap: 10px;
           text-align: left;
           cursor: pointer;
@@ -497,43 +496,50 @@ export default function App() {
         }
 
         .card-tag {
+          display: block;
           font-size: 10px;
           letter-spacing: 0.22em;
+          line-height: 1;
           color: #8a8a8a;
           flex-shrink: 0;
         }
 
         .card:hover .card-tag { color: #b0b0b0; }
 
+        .card-copy {
+          display: grid;
+          grid-template-rows: auto auto;
+          gap: 10px;
+          flex: 1;
+          min-height: 0;
+          align-content: start;
+        }
+
         .card-label {
+          display: block;
           font-family: 'Playfair Display', serif;
-          font-size: 16px;
+          font-size: 20px;
           font-weight: 700;
           line-height: 1.2;
-          margin-bottom: 10px;
+          margin: 0;
           color: #050505;
-          min-height: 2.4em;
+          height: 2.4em;
+          overflow: hidden;
         }
 
         .card:hover .card-label { color: #ffffff; }
 
         .card-desc {
+          display: block;
           font-family: 'Inter', sans-serif;
           font-size: 12px;
           line-height: 1.45;
           color: #555;
           font-weight: 400;
-          margin-top: auto;
+          margin: 0;
         }
 
         .card:hover .card-desc { color: rgba(245, 245, 245, 0.75); }
-
-        .card-copy {
-          display: flex;
-          flex-direction: column;
-          flex: 1;
-          min-height: 0;
-        }
 
         .step-view {
           display: flex;
@@ -1063,19 +1069,19 @@ export default function App() {
           color: #f5f5f5;
         }
 
-        /* Step 6 — transportation */
+        /* Step 6 — transportation / white */
         .shell.transport {
-          background: #050505;
+          background: #ffffff;
         }
 
         .shell.transport::before {
-          opacity: 0.06;
-          mix-blend-mode: screen;
+          opacity: 0.04;
+          mix-blend-mode: multiply;
         }
 
         .frame.transport {
-          background: #050505;
-          color: #f5f5f5;
+          background: #ffffff;
+          color: #050505;
           padding: 28px 24px 36px;
           justify-content: center;
         }
@@ -1084,12 +1090,20 @@ export default function App() {
           max-width: 420px;
           width: 100%;
           margin: 0 auto 36px;
-          color: rgba(245, 245, 245, 0.45);
+          color: rgba(5, 5, 5, 0.4);
           position: absolute;
           top: 28px;
           left: 50%;
           transform: translateX(-50%);
           padding: 0 24px;
+        }
+
+        .frame.transport .back-btn {
+          color: rgba(5, 5, 5, 0.45);
+        }
+
+        .frame.transport .back-btn:hover {
+          color: #050505;
         }
 
         .step-view.transport-view {
@@ -1107,7 +1121,7 @@ export default function App() {
           font-size: 32px;
           line-height: 1.25;
           letter-spacing: -0.01em;
-          color: #f5f5f5;
+          color: #050505;
           text-align: center;
           max-width: 340px;
         }
@@ -1122,9 +1136,9 @@ export default function App() {
         .transport-btn {
           appearance: none;
           width: 100%;
-          border: 1px solid rgba(245, 245, 245, 0.9);
-          background: rgba(245, 245, 245, 0.08);
-          color: #f5f5f5;
+          border: 1px solid #1a1a1a;
+          background: transparent;
+          color: #050505;
           font-family: 'Inter', sans-serif;
           font-size: 12px;
           font-weight: 600;
@@ -1133,118 +1147,256 @@ export default function App() {
           padding: 16px 18px;
           cursor: pointer;
           border-radius: 0;
-          backdrop-filter: blur(6px);
           transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
         }
 
         .transport-btn:hover {
-          background: rgba(245, 245, 245, 0.95);
-          color: #050505;
-          border-color: #f5f5f5;
+          background: #050505;
+          color: #ffffff;
+          border-color: #050505;
         }
 
-        /* Step 7 — confirmation / black background */
-        .shell.confirm {
+        /* Step 7 — contact / Dark Feminine Brutalist */
+        .shell.contact {
           background: #050505;
         }
 
-        .shell.confirm::before {
+        .shell.contact::before {
           opacity: 0.06;
           mix-blend-mode: screen;
         }
 
-        .frame.confirm {
+        .frame.contact {
           background: #050505;
           color: #f5f5f5;
-          padding: 28px 24px 32px;
+          padding: 28px 24px 36px;
+          justify-content: flex-start;
+        }
+
+        .frame.contact .meta {
+          max-width: 420px;
+          width: 100%;
+          margin: 0 auto 36px;
+          color: rgba(245, 245, 245, 0.45);
+        }
+
+        .frame.contact .back-btn {
+          color: rgba(245, 245, 245, 0.45);
+        }
+
+        .frame.contact .back-btn:hover {
+          color: #f5f5f5;
+        }
+
+        .step-view.contact-view {
+          justify-content: center;
+          align-items: center;
+          gap: 24px;
+          max-width: 420px;
+          width: 100%;
+          text-align: center;
+        }
+
+        .contact-prompt {
+          font-family: 'Inter', sans-serif;
+          font-size: 16px;
+          font-weight: 400;
+          line-height: 1.5;
+          color: rgba(245, 245, 245, 0.78);
+          max-width: 320px;
+          margin: 0;
+        }
+
+        .contact-input {
+          appearance: none;
+          width: 100%;
+          max-width: 360px;
+          background: #050505;
+          color: #ffffff;
+          border: 1px solid rgba(245, 245, 245, 0.45);
+          border-radius: 0;
+          font-family: 'Inter', sans-serif;
+          font-size: 14px;
+          font-weight: 400;
+          padding: 14px 12px;
+          outline: none;
+          text-align: center;
+        }
+
+        .contact-input::placeholder {
+          color: rgba(245, 245, 245, 0.35);
+        }
+
+        .contact-input:focus {
+          border-color: #f5f5f5;
+          outline: 1px solid rgba(245, 245, 245, 0.25);
+          outline-offset: 0;
+        }
+
+        .contact-btn {
+          appearance: none;
+          width: 100%;
+          max-width: 360px;
+          background: #f5f5f5;
+          color: #050505;
+          border: 1px solid #f5f5f5;
+          border-radius: 0;
+          font-family: 'Inter', sans-serif;
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+          padding: 15px 18px;
+          cursor: pointer;
+          transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+        }
+
+        .contact-btn:hover {
+          background: transparent;
+          color: #f5f5f5;
+          border-color: #f5f5f5;
+        }
+
+        /* Step 8 — confirmation / white */
+        .shell.confirm {
+          background: #ffffff;
+        }
+
+        .shell.confirm::before {
+          opacity: 0.04;
+          mix-blend-mode: multiply;
+        }
+
+        .frame.confirm {
+          background: #ffffff;
+          color: #050505;
+          padding: 28px 24px 36px;
+          justify-content: flex-start;
         }
 
         .frame.confirm .meta {
           max-width: 420px;
           width: 100%;
-          margin: 0 auto 28px;
-          color: rgba(245, 245, 245, 0.45);
+          margin: 0 auto 36px;
+          color: rgba(5, 5, 5, 0.4);
         }
 
         .frame.confirm .back-btn {
-          color: rgba(245, 245, 245, 0.5);
+          color: rgba(5, 5, 5, 0.45);
         }
 
         .frame.confirm .back-btn:hover {
-          color: #f5f5f5;
+          color: #050505;
+        }
+
+        .step-view.confirm-view {
+          justify-content: flex-start;
+          gap: 32px;
+          max-width: 420px;
+          overflow: hidden;
+          min-height: 0;
+        }
+
+        .confirm-top {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          width: 100%;
+          flex-shrink: 0;
         }
 
         .frame.confirm .rule {
           width: 28px;
-          background: rgba(245, 245, 245, 0.9);
+          background: rgba(5, 5, 5, 0.9);
+          margin: 0 0 20px;
         }
 
-        .frame.confirm .title {
-          color: #f5f5f5;
+        .confirm-title {
+          font-family: 'Playfair Display', serif;
+          font-style: italic;
+          font-weight: 500;
+          font-size: 48px;
+          line-height: 1.05;
+          letter-spacing: -0.02em;
+          color: #050505;
+          margin: 0 0 12px;
         }
 
-        .frame.confirm .footer-line {
-          border-top-color: rgba(245, 245, 245, 0.15);
-        }
-
-        .frame.confirm .btn.tiny {
-          color: rgba(245, 245, 245, 0.45);
-        }
-
-        .frame.confirm .btn.tiny:hover {
-          color: #f5f5f5;
+        .confirm-title .accent {
+          color: #ff003c;
         }
 
         .confirm-lead {
           font-family: 'Inter', sans-serif;
-          font-size: 15px;
-          line-height: 1.55;
-          color: rgba(245, 245, 245, 0.7);
-          max-width: 320px;
-          margin-bottom: 28px;
+          font-size: 11px;
+          font-weight: 500;
+          letter-spacing: 0.2em;
+          text-transform: uppercase;
+          color: #8a8a8a;
+          margin: 0 0 24px;
         }
 
         .confirm-summary {
           width: 100%;
-          max-width: 340px;
-          border-top: 1px solid rgba(245, 245, 245, 0.15);
-          padding-top: 18px;
+          border-top: 1px solid rgba(5, 5, 5, 0.14);
+          padding-top: 16px;
         }
 
         .confirm-summary-text {
           font-family: 'Inter', sans-serif;
           font-size: 15px;
-          line-height: 1.55;
-          color: #f5f5f5;
+          line-height: 1.65;
+          color: #050505;
+          max-width: 360px;
         }
 
-        .step-view.confirm-view {
-          overflow-y: auto;
-          padding-bottom: 8px;
+        .confirm-media {
+          width: 100%;
+          flex: 1;
+          min-height: 180px;
+          display: flex;
+          align-items: stretch;
         }
 
         .confirm-video {
           display: block;
           width: 100%;
-          max-width: 28rem;
-          margin: 24px auto 0;
+          height: 100%;
+          max-height: 100%;
           border-radius: 0;
-          border: none;
-          background: #050505;
-          aspect-ratio: 16 / 9;
+          border: 1px solid rgba(5, 5, 5, 0.12);
+          background: #f5f5f5;
           object-fit: cover;
           cursor: pointer;
         }
+
+        @media (max-height: 700px) {
+          .confirm-title {
+            font-size: 40px;
+          }
+
+          .confirm-lead {
+            margin-bottom: 18px;
+          }
+
+          .step-view.confirm-view {
+            gap: 22px;
+          }
+
+          .confirm-media {
+            min-height: 140px;
+          }
+        }
       `}</style>
 
-      <div className={`shell${step === 1 ? ' survey' : ''}${step === 2 ? ' reveal' : ''}${step === 3 ? ' last-chance' : ''}${step === 5 ? ' timing' : ''}${step === 6 ? ' transport' : ''}${step === 7 ? ' confirm' : ''}`}>
-        <div className={`frame${step === 1 ? ' survey' : ''}${step === 2 ? ' reveal' : ''}${step === 3 ? ' last-chance' : ''}${step === 4 ? ' vibes-frame' : ''}${step === 5 ? ' timing' : ''}${step === 6 ? ' transport' : ''}${step === 7 ? ' confirm' : ''}`}>
+      <div className={`shell${step === 1 ? ' survey' : ''}${step === 2 ? ' reveal' : ''}${step === 3 ? ' last-chance' : ''}${step === 5 ? ' timing' : ''}${step === 6 ? ' transport' : ''}${step === 7 ? ' contact' : ''}${step === 8 ? ' confirm' : ''}`}>
+        <div className={`frame${step === 1 ? ' survey' : ''}${step === 2 ? ' reveal' : ''}${step === 3 ? ' last-chance' : ''}${step === 4 ? ' vibes-frame' : ''}${step === 5 ? ' timing' : ''}${step === 6 ? ' transport' : ''}${step === 7 ? ' contact' : ''}${step === 8 ? ' confirm' : ''}`}>
           {step !== 1 && (
             <div className="meta">
               <button type="button" className="back-btn" onClick={goBack}>
                 ← Назад
               </button>
-              <span>0{step} / 07</span>
+              <span>0{step} / 08</span>
             </div>
           )}
 
@@ -1258,7 +1410,6 @@ export default function App() {
                 className="survey-btn"
                 onClick={() => {
                   trackAnswer({ started: true });
-                  sendProgress('Нажала «Начать опрос»');
                   setStep(2);
                 }}
               >
@@ -1284,7 +1435,6 @@ export default function App() {
                   setSkipFleeing(false);
                   setRefuseLabel('Нет, я все таки не хочу');
                   trackAnswer({ accepted: true });
-                  sendProgress('Нажала «Да, ты тоже ничего))»');
                   setStep(3);
                 }}>
                   Да, ты тоже ничего))
@@ -1322,7 +1472,6 @@ export default function App() {
                   onClick={() => {
                     setRefuseLabel('Нет, я все таки не хочу');
                     trackAnswer({ confirmed: true });
-                    sendProgress('Нажала «Да, да, да»');
                     setStep(4);
                   }}
                 >
@@ -1363,7 +1512,7 @@ export default function App() {
 
           {step === 5 && (
             <div className="step-view timing-view">
-              <h1 className="timing-title">TIMING.</h1>
+              <h1 className="timing-title">TIME</h1>
               <p className="timing-sub">Выбери удобный день и время.</p>
               <div className="timing-grid">
                 {timeSlots.map((label) => (
@@ -1441,27 +1590,53 @@ export default function App() {
           )}
 
           {step === 7 && (
+            <div className="step-view contact-view">
+              <p className="contact-prompt">Оставь, пожалуйста, свой контакт для связи.</p>
+              <input
+                className="contact-input"
+                type="text"
+                value={contactInfo}
+                onChange={(e) => setContactInfo(e.target.value.replace(/[^a-zA-Z0-9@._+\-]/g, ''))}
+                placeholder="Пример: nadiakapshul"
+                autoFocus
+                inputMode="latin"
+                lang="en"
+                autoCapitalize="off"
+                autoCorrect="off"
+                spellCheck={false}
+              />
+              <button type="button" className="contact-btn" onClick={submitContact}>
+                ДАЛЕЕ
+              </button>
+            </div>
+          )}
+
+          {step === 8 && (
             <div className="step-view confirm-view">
-              <div className="rule" />
-              <h1 className="title xl">
-                Accepted<span className="accent">.</span>
-              </h1>
-              <p className="confirm-lead">Инвестировала в золото</p>
-              {summarySentence && (
-                <div className="confirm-summary">
-                  <p className="confirm-summary-text">{summarySentence}</p>
-                </div>
-              )}
-              <video
-                ref={videoRef}
-                className="confirm-video"
-                autoPlay
-                loop
-                playsInline
-                onClick={toggleVideoPlayback}
-              >
-                <source src="/video.mp4" type="video/mp4" />
-              </video>
+              <div className="confirm-top">
+                <div className="rule" />
+                <h1 className="confirm-title">
+                  Accepted<span className="accent">.</span>
+                </h1>
+                <p className="confirm-lead">Инвестировала в золото</p>
+                {summarySentence && (
+                  <div className="confirm-summary">
+                    <p className="confirm-summary-text">{summarySentence}</p>
+                  </div>
+                )}
+              </div>
+              <div className="confirm-media">
+                <video
+                  ref={videoRef}
+                  className="confirm-video"
+                  autoPlay
+                  loop
+                  playsInline
+                  onClick={toggleVideoPlayback}
+                >
+                  <source src="/video.mp4" type="video/mp4" />
+                </video>
+              </div>
             </div>
           )}
         </div>
