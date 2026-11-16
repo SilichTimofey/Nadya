@@ -814,21 +814,45 @@ export default function App() {
           min-height: 48px;
         }
 
-        /* Step 3 — Last Chance / Dark Feminine Brutalist */
+        /* Step 3 — Last Chance / photo background */
         .shell.last-chance {
           background: #050505;
         }
 
         .shell.last-chance::before {
-          opacity: 0.07;
-          mix-blend-mode: screen;
+          display: none;
         }
 
         .frame.last-chance {
-          background: #050505;
+          background: transparent;
           color: #f5f5f5;
           padding: 28px 24px 36px;
           justify-content: flex-start;
+          isolation: isolate;
+        }
+
+        .frame.last-chance::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          z-index: 0;
+          background-image:
+            linear-gradient(
+              180deg,
+              rgba(0, 0, 0, 0.45) 0%,
+              rgba(0, 0, 0, 0.58) 45%,
+              rgba(0, 0, 0, 0.72) 100%
+            ),
+            url('/33.jpg');
+          background-size: cover;
+          background-position: center;
+          background-repeat: no-repeat;
+          pointer-events: none;
+        }
+
+        .frame.last-chance > * {
+          position: relative;
+          z-index: 1;
         }
 
         .frame.last-chance .meta {
@@ -836,6 +860,8 @@ export default function App() {
           width: 100%;
           margin: 0 auto 36px;
           color: rgba(245, 245, 245, 0.45);
+          z-index: 2;
+          pointer-events: auto;
         }
 
         .step-view.last-chance-view {
@@ -1139,6 +1165,8 @@ export default function App() {
           left: 50%;
           transform: translateX(-50%);
           padding: 0 24px;
+          z-index: 2;
+          pointer-events: auto;
         }
 
         .frame.transport .back-btn {
