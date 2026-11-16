@@ -242,7 +242,7 @@ export default function App() {
       id: 'gallery',
       tag: '05',
       label: 'Галерея',
-      desc: 'В этом что-то есть',
+      desc: 'Место, где висят картины. В этом что-то есть',
     },
     {
       id: 'coffee',
@@ -267,6 +267,15 @@ export default function App() {
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;0,700;1,500;1,700&display=swap');
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        input {
+          font-size: 16px;
+          touch-action: manipulation;
+        }
+
+        button {
+          touch-action: manipulation;
+        }
 
         .shell {
           min-height: 100svh;
@@ -333,6 +342,7 @@ export default function App() {
           color: #8a8a8a;
           cursor: pointer;
           padding: 0;
+          touch-action: manipulation;
           transition: color 0.15s ease;
         }
 
@@ -388,6 +398,7 @@ export default function App() {
           padding: 16px 18px;
           width: 100%;
           cursor: pointer;
+          touch-action: manipulation;
           transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
           border-radius: 0;
         }
@@ -744,8 +755,12 @@ export default function App() {
           font-weight: 500;
           line-height: 1.35;
           color: #f5f5f5;
-          margin-bottom: 22px;
-          max-width: 320px;
+          margin-bottom: 72px;
+          max-width: 360px;
+        }
+
+        .frame.reveal .subtitle .smiley {
+          white-space: nowrap;
         }
 
         .frame.reveal .body {
@@ -976,6 +991,7 @@ export default function App() {
           width: 100%;
           cursor: pointer;
           border-radius: 0;
+          touch-action: manipulation;
           transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
           text-align: center;
         }
@@ -1031,11 +1047,14 @@ export default function App() {
           border: 1px solid rgba(245, 245, 245, 0.45);
           border-radius: 0;
           font-family: 'Inter', sans-serif;
-          font-size: 14px;
+          font-size: 16px;
           font-weight: 400;
-          padding: 14px 12px;
+          letter-spacing: -0.01em;
+          line-height: 1.35;
+          padding: 12px 12px;
           outline: none;
           margin-bottom: 14px;
+          touch-action: manipulation;
         }
 
         .time-input::placeholder {
@@ -1069,28 +1088,52 @@ export default function App() {
           color: #f5f5f5;
         }
 
-        /* Step 6 — transportation / white */
+        /* Step 6 — transportation / photo background */
         .shell.transport {
-          background: #ffffff;
+          background: #050505;
         }
 
         .shell.transport::before {
-          opacity: 0.04;
-          mix-blend-mode: multiply;
+          display: none;
         }
 
         .frame.transport {
-          background: #ffffff;
-          color: #050505;
+          background: transparent;
+          color: #f5f5f5;
           padding: 28px 24px 36px;
           justify-content: center;
+          isolation: isolate;
+        }
+
+        .frame.transport::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          z-index: 0;
+          background-image:
+            linear-gradient(
+              180deg,
+              rgba(0, 0, 0, 0.45) 0%,
+              rgba(0, 0, 0, 0.58) 45%,
+              rgba(0, 0, 0, 0.72) 100%
+            ),
+            url('/444.jpg');
+          background-size: cover;
+          background-position: center;
+          background-repeat: no-repeat;
+          pointer-events: none;
+        }
+
+        .frame.transport > * {
+          position: relative;
+          z-index: 1;
         }
 
         .frame.transport .meta {
           max-width: 420px;
           width: 100%;
           margin: 0 auto 36px;
-          color: rgba(5, 5, 5, 0.4);
+          color: rgba(245, 245, 245, 0.5);
           position: absolute;
           top: 28px;
           left: 50%;
@@ -1099,11 +1142,11 @@ export default function App() {
         }
 
         .frame.transport .back-btn {
-          color: rgba(5, 5, 5, 0.45);
+          color: rgba(245, 245, 245, 0.55);
         }
 
         .frame.transport .back-btn:hover {
-          color: #050505;
+          color: #f5f5f5;
         }
 
         .step-view.transport-view {
@@ -1121,7 +1164,7 @@ export default function App() {
           font-size: 32px;
           line-height: 1.25;
           letter-spacing: -0.01em;
-          color: #050505;
+          color: #f5f5f5;
           text-align: center;
           max-width: 340px;
         }
@@ -1136,9 +1179,9 @@ export default function App() {
         .transport-btn {
           appearance: none;
           width: 100%;
-          border: 1px solid #1a1a1a;
+          border: 1px solid rgba(245, 245, 245, 0.55);
           background: transparent;
-          color: #050505;
+          color: #f5f5f5;
           font-family: 'Inter', sans-serif;
           font-size: 12px;
           font-weight: 600;
@@ -1147,13 +1190,14 @@ export default function App() {
           padding: 16px 18px;
           cursor: pointer;
           border-radius: 0;
+          touch-action: manipulation;
           transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
         }
 
         .transport-btn:hover {
-          background: #050505;
-          color: #ffffff;
-          border-color: #050505;
+          background: #f5f5f5;
+          color: #050505;
+          border-color: #f5f5f5;
         }
 
         /* Step 7 — contact / Dark Feminine Brutalist */
@@ -1216,11 +1260,14 @@ export default function App() {
           border: 1px solid rgba(245, 245, 245, 0.45);
           border-radius: 0;
           font-family: 'Inter', sans-serif;
-          font-size: 14px;
+          font-size: 16px;
           font-weight: 400;
-          padding: 14px 12px;
+          letter-spacing: -0.01em;
+          line-height: 1.35;
+          padding: 12px 12px;
           outline: none;
           text-align: center;
+          touch-action: manipulation;
         }
 
         .contact-input::placeholder {
@@ -1248,6 +1295,7 @@ export default function App() {
           text-transform: uppercase;
           padding: 15px 18px;
           cursor: pointer;
+          touch-action: manipulation;
           transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
         }
 
@@ -1353,20 +1401,23 @@ export default function App() {
         .confirm-media {
           width: 100%;
           flex: 1;
-          min-height: 180px;
+          min-height: 0;
           display: flex;
-          align-items: stretch;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
         }
 
         .confirm-video {
           display: block;
-          width: 100%;
-          height: 100%;
+          width: auto;
+          height: auto;
+          max-width: 100%;
           max-height: 100%;
           border-radius: 0;
           border: 1px solid rgba(5, 5, 5, 0.12);
           background: #f5f5f5;
-          object-fit: cover;
+          object-fit: contain;
           cursor: pointer;
         }
 
@@ -1381,10 +1432,6 @@ export default function App() {
 
           .step-view.confirm-view {
             gap: 22px;
-          }
-
-          .confirm-media {
-            min-height: 140px;
           }
         }
       `}</style>
@@ -1422,10 +1469,13 @@ export default function App() {
             <div className="step-view reveal-copy">
               <div className="reveal-top">
                 <div className="rule" />
-                <h1 className="title xl">Привет.</h1>
-                <p className="subtitle">На самом деле это не кастдев :)</p>
+                <h1 className="title xl">Привет, Надя</h1>
+                <p className="subtitle">
+                  На самом деле это не{' '}
+                  <span className="smiley">кастдев&nbsp;:)</span>
+                </p>
                 <p className="body">
-                  Мы очень классно пообщались на дне рождения и мне понравилось это, я хочу как минимум предложить повторить и увидеться!
+                  Мы очень классно пообщались на дне рождении и мне это понравилось. Я хочу как минимум предложить повторить и увидеться!
                 </p>
               </div>
               <div className="spacer" />
@@ -1440,7 +1490,7 @@ export default function App() {
                   Да, ты тоже ничего))
                 </button>
                 <div className="skip-wrap">
-                  {skipFleeing && <div className="btn ghost" style={{ visibility: 'hidden', pointerEvents: 'none' }}>нет, спасибо</div>}
+                  {skipFleeing && <div className="btn ghost" style={{ visibility: 'hidden', pointerEvents: 'none' }}>Нет, спасибо</div>}
                   <button
                     ref={skipRef}
                     type="button"
@@ -1451,7 +1501,7 @@ export default function App() {
                     onTouchStart={dodge}
                     onClick={dodge}
                   >
-                    нет, спасибо
+                    Нет, спасибо
                   </button>
                 </div>
               </div>
