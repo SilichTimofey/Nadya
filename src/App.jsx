@@ -26,6 +26,20 @@ export default function App() {
   });
 
   useEffect(() => {
+    const images = ['/second.jpg', '/33.jpg', '/444.jpg'];
+    images.forEach((src) => {
+      const img = new Image();
+      img.src = src;
+    });
+
+    const video = document.createElement('video');
+    video.preload = 'auto';
+    video.muted = true;
+    video.src = '/video.mp4';
+    video.load();
+  }, []);
+
+  useEffect(() => {
     if (step !== 8) return;
     const video = videoRef.current;
     if (!video) return;
